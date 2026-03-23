@@ -1,370 +1,198 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚀 스페이스 슈터 - 안정화 버전</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-family: 'Arial', sans-serif;
-            overflow: hidden;
-        }
-        #gameContainer { position: relative; }
-        canvas {
-            border: 2px solid #00ffff;
-            box-shadow: 0 0 20px #00ffff, 0 0 40px #0088ff;
-            display: block;
-            background-color: #000;
-        }
-        #ui {
-            position: absolute;
-            top: 0; left: 0; width: 100%;
-            padding: 10px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            pointer-events: none;
-            z-index: 5;
-        }
-        .ui-text {
-            color: #00ffff;
-            font-size: 18px;
-            font-weight: bold;
-            text-shadow: 0 0 10px #00ffff;
-        }
-        #overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.85);
-            color: white;
-            z-index: 10;
-        }
-        #overlay h1 {
-            font-size: 48px;
-            color: #00ffff;
-            text-shadow: 0 0 20px #00ffff;
-            margin-bottom: 20px;
-        }
-        #overlay p { font-size: 18px; color: #aaa; margin: 8px 0; }
-        #startBtn {
-            margin-top: 30px;
-            padding: 15px 40px;
-            font-size: 22px;
-            background: linear-gradient(135deg, #00ffff, #0088ff);
-            color: #000;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 0 15px #00ffff;
-        }
-        #startBtn:hover { transform: scale(1.05); }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal Walk ETA Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="gameContainer">
-    <canvas id="gameCanvas" width="480" height="640"></canvas>
-    <div id="ui">
-        <span class="ui-text" id="scoreDisplay">점수: 0</span>
-        <span class="ui-text" id="levelDisplay">레벨: 1</span>
-        <span class="ui-text" id="livesDisplay">❤️❤️❤️</span>
-    </div>
-    <div id="overlay">
-        <h1 id="mainTitle">🚀 스페이스 슈터</h1>
-        <div id="instructions">
-            <p>← → 방향키 또는 A/D : 이동</p>
-            <p>스페이스바 : 발사</p>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">AI 기반 개인 맞춤 도보 ETA</span>
+        <h1>지도 서비스의 평균 속도 ETA를<br>개인 보행 모델로 다시 계산합니다.</h1>
+        <p>
+          스마트폰 센서 데이터와 간단한 AI 추론 로직을 결합해 사용자의 보폭, 걸음 수,
+          GPS 속도, 경사도, 시간대, 피로도를 반영한 맞춤형 도착 시간을 예측하는 프로토타입입니다.
+        </p>
+        <div class="hero-actions">
+          <button id="loadSampleBtn" class="primary-btn">샘플 데이터 불러오기</button>
+          <button id="compareBtn" class="secondary-btn">평균 ETA와 비교</button>
         </div>
-        <div id="finalScore" style="display:none; color: #ffff00; font-size: 24px; margin: 10px 0;"></div>
-        <button id="startBtn">게임 시작</button>
-    </div>
-</div>
+      </div>
+      <div class="hero-panel">
+        <div class="hero-card">
+          <p class="card-label">Prototype Flow</p>
+          <ol>
+            <li>센서 + 사용자 프로필 수집</li>
+            <li>개인 보행 속도 계산</li>
+            <li>AI 보정 계수 적용</li>
+            <li>개인화 ETA 제공</li>
+          </ol>
+        </div>
+      </div>
+    </header>
 
-<script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const overlay = document.getElementById('overlay');
-    const startBtn = document.getElementById('startBtn');
-    const scoreDisplay = document.getElementById('scoreDisplay');
-    const levelDisplay = document.getElementById('levelDisplay');
-    const livesDisplay = document.getElementById('livesDisplay');
-    const finalScoreEl = document.getElementById('finalScore');
-    const mainTitle = document.getElementById('mainTitle');
-    const instructions = document.getElementById('instructions');
+    <main class="dashboard-grid">
+      <section class="panel input-panel">
+        <div class="panel-header">
+          <div>
+            <p class="section-kicker">01. User & Sensor Data</p>
+            <h2>입력 데이터 수집</h2>
+          </div>
+          <span class="status-pill">실시간 계산</span>
+        </div>
 
-    const W = canvas.width;
-    const H = canvas.height;
+        <form id="etaForm" class="form-grid">
+          <label>
+            키 (cm)
+            <input type="number" name="height" min="120" max="230" step="1" value="170">
+          </label>
+          <label>
+            체중 (kg)
+            <input type="number" name="weight" min="35" max="180" step="0.1" value="66">
+          </label>
+          <label>
+            보폭 (m)
+            <input type="number" name="stride" min="0.3" max="1.5" step="0.01" value="0.72">
+          </label>
+          <label>
+            분당 걸음 수 (spm)
+            <input type="number" name="cadence" min="40" max="180" step="1" value="108">
+          </label>
+          <label>
+            GPS 이동 속도 (km/h)
+            <input type="number" name="gpsSpeed" min="0" max="12" step="0.1" value="4.9">
+          </label>
+          <label>
+            센서 신뢰도 (%)
+            <input type="number" name="sensorConfidence" min="0" max="100" step="1" value="82">
+          </label>
+          <label>
+            이동 거리 (km)
+            <input type="number" name="distance" min="0.1" max="50" step="0.1" value="2.8">
+          </label>
+          <label>
+            경사도 (%)
+            <input type="number" name="slope" min="-10" max="20" step="0.1" value="3.4">
+          </label>
+          <label>
+            시간대
+            <select name="timeOfDay">
+              <option value="morning">출근/아침</option>
+              <option value="midday">낮</option>
+              <option value="evening" selected>퇴근/저녁</option>
+              <option value="night">야간</option>
+            </select>
+          </label>
+          <label>
+            피로도
+            <select name="fatigue">
+              <option value="low">낮음</option>
+              <option value="medium" selected>보통</option>
+              <option value="high">높음</option>
+            </select>
+          </label>
+          <label>
+            최근 7일 평균 걸음 수
+            <input type="number" name="weeklySteps" min="1000" max="30000" step="100" value="8600">
+          </label>
+          <label>
+            최근 ETA 오차율 (%)
+            <input type="number" name="etaError" min="0" max="40" step="0.1" value="8.5">
+          </label>
+        </form>
+      </section>
 
-    // 게임 상태 변수
-    let score, level, lives, gameRunning = false, animId;
-    let invincibleTimer = 0;
-    let rapidFireTimer = 0;
-    let player, bullets, enemyBullets, enemies, explosions, powerUps;
+      <section class="panel output-panel">
+        <div class="panel-header">
+          <div>
+            <p class="section-kicker">02. Personalized Prediction</p>
+            <h2>개인 보행 속도 & ETA 결과</h2>
+          </div>
+          <span id="insightBadge" class="status-pill accent">학습 완료</span>
+        </div>
 
-    // 키 입력 처리
-    const keys = {};
-    window.addEventListener('keydown', e => { keys[e.code] = true; });
-    window.addEventListener('keyup', e => { keys[e.code] = false; });
+        <div class="metrics-grid">
+          <article class="metric-card highlight">
+            <p class="metric-label">개인화 ETA</p>
+            <strong id="etaValue">34분</strong>
+            <span id="etaSummary">평균 지도 ETA보다 3분 빠릅니다.</span>
+          </article>
+          <article class="metric-card">
+            <p class="metric-label">개인 보행 속도</p>
+            <strong id="speedValue">4.9 km/h</strong>
+            <span id="speedDetail">보폭 × 걸음 수 기반</span>
+          </article>
+          <article class="metric-card">
+            <p class="metric-label">예상 총 걸음 수</p>
+            <strong id="stepsValue">3,889 보</strong>
+            <span id="stepsDetail">거리와 보폭 기반 산출</span>
+          </article>
+          <article class="metric-card">
+            <p class="metric-label">AI 보정 계수</p>
+            <strong id="adjustmentValue">+6%</strong>
+            <span id="adjustmentDetail">시간대·경사·피로도 반영</span>
+          </article>
+        </div>
 
-    // 배경 별 생성
-    const stars = Array.from({length: 100}, () => ({
-        x: Math.random() * W,
-        y: Math.random() * H,
-        r: Math.random() * 1.5,
-        speed: Math.random() * 2 + 0.5
-    }));
+        <div class="comparison-box">
+          <div>
+            <p class="comparison-label">기본 지도 ETA (4.5 km/h 기준)</p>
+            <strong id="defaultEta">37분</strong>
+          </div>
+          <div>
+            <p class="comparison-label">개인화 모델 오차 보정</p>
+            <strong id="modelConfidence">신뢰도 82%</strong>
+          </div>
+          <div>
+            <p class="comparison-label">추천 메시지</p>
+            <strong id="recommendation">현재 패턴으로는 도착 시간 예측이 안정적입니다.</strong>
+          </div>
+        </div>
 
-    function spawnEnemies() {
-        enemies = [];
-        const cols = 7;
-        const rows = Math.min(2 + Math.floor(level / 2), 5);
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-                enemies.push({
-                    x: 60 + c * 60,
-                    y: 80 + r * 50,
-                    w: 30, h: 25,
-                    hp: 1 + Math.floor(level / 3),
-                    type: r % 3,
-                    shootTimer: Math.random() * 100 + 50
-                });
-            }
-        }
-    }
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>최근 7일 개인 속도 학습 추세</h3>
+            <p>센서 기반 개인 속도와 AI 보정 후 속도를 함께 표시합니다.</p>
+          </div>
+          <div id="historyChart" class="history-chart" aria-label="7일 속도 추세 차트"></div>
+        </div>
+      </section>
 
-    function initGame() {
-        // 기존 루프가 있다면 중지
-        if (animId) cancelAnimationFrame(animId);
+      <section class="panel system-panel">
+        <div class="panel-header">
+          <div>
+            <p class="section-kicker">03. System Architecture</p>
+            <h2>구현 구조</h2>
+          </div>
+        </div>
+        <div class="architecture-grid">
+          <article>
+            <h3>① 사용자 데이터 수집</h3>
+            <p>키, 체중, 보폭, 주간 걸음 수, 스마트폰 GPS 속도를 한 번에 모읍니다.</p>
+          </article>
+          <article>
+            <h3>② 개인 보행 속도 계산</h3>
+            <p>보폭 × 분당 걸음 수를 기본 속도로 사용하고 GPS 값을 함께 혼합합니다.</p>
+          </article>
+          <article>
+            <h3>③ AI 기반 예측</h3>
+            <p>경사도, 시간대, 피로도, 과거 ETA 오차율을 이용해 보정 계수를 만듭니다.</p>
+          </article>
+          <article>
+            <h3>④ 맞춤 ETA 제공</h3>
+            <p>개인 속도, 거리, 예상 총 걸음 수, 평균 지도 ETA 대비 차이를 동시에 보여줍니다.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
 
-        score = 0; level = 1; lives = 3;
-        invincibleTimer = 0; rapidFireTimer = 0;
-        bullets = []; enemyBullets = []; explosions = []; powerUps = [];
-        
-        player = { x: W / 2, y: H - 60, w: 30, h: 30, speed: 5, shootCooldown: 0 };
-        
-        spawnEnemies();
-        updateUI();
-
-        gameRunning = true;
-        overlay.style.display = 'none';
-        loop();
-    }
-
-    function updateUI() {
-        scoreDisplay.textContent = `점수: ${score}`;
-        levelDisplay.textContent = `레벨: ${level}`;
-        livesDisplay.textContent = lives > 0 ? '❤️'.repeat(lives) : '';
-    }
-
-    function rectsOverlap(a, b) {
-        return Math.abs(a.x - b.x) < (a.w + b.w) / 2 &&
-               Math.abs(a.y - b.y) < (a.h + b.h) / 2;
-    }
-
-    function createExplosion(x, y, color) {
-        for (let i = 0; i < 10; i++) {
-            explosions.push({
-                x, y,
-                vx: (Math.random() - 0.5) * 6,
-                vy: (Math.random() - 0.5) * 6,
-                life: 1.0,
-                decay: 0.02 + Math.random() * 0.02,
-                color: color || '#ffaa00'
-            });
-        }
-    }
-
-    function update() {
-        if (!gameRunning) return;
-
-        // 배경 이동
-        stars.forEach(s => {
-            s.y += s.speed;
-            if (s.y > H) s.y = 0;
-        });
-
-        // 플레이어 이동
-        if ((keys['ArrowLeft'] || keys['KeyA']) && player.x > 20) player.x -= player.speed;
-        if ((keys['ArrowRight'] || keys['KeyD']) && player.x < W - 20) player.x += player.speed;
-
-        // 발사 로직
-        if (player.shootCooldown > 0) player.shootCooldown--;
-        if (rapidFireTimer > 0) rapidFireTimer--;
-
-        if ((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && player.shootCooldown <= 0) {
-            bullets.push({ x: player.x, y: player.y - 15, w: 4, h: 12, speed: 8 });
-            player.shootCooldown = rapidFireTimer > 0 ? 7 : 15;
-        }
-
-        // 투사체 처리
-        bullets = bullets.filter(b => {
-            b.y -= b.speed;
-            return b.y > -20;
-        });
-
-        enemyBullets = enemyBullets.filter(b => {
-            b.x += b.vx;
-            b.y += b.vy;
-            return b.y < H + 20 && b.y > -20 && b.x > -20 && b.x < W + 20;
-        });
-
-        // 적 행동 및 충돌
-        const enemyOscillation = Math.sin(Date.now() * 0.002) * (1 + level * 0.2);
-        enemies.forEach(e => {
-            e.x += enemyOscillation;
-            e.shootTimer--;
-            if (e.shootTimer <= 0) {
-                const dx = player.x - e.x;
-                const dy = player.y - e.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                enemyBullets.push({
-                    x: e.x, y: e.y, w: 6, h: 6,
-                    vx: (dx / dist) * (3 + level * 0.2),
-                    vy: (dy / dist) * (3 + level * 0.2)
-                });
-                e.shootTimer = Math.max(40, 120 - level * 10) + Math.random() * 50;
-            }
-        });
-
-        // 충돌: 내 총알 -> 적
-        bullets.forEach(b => {
-            enemies.forEach(e => {
-                if (!b.destroyed && !e.dead && rectsOverlap(b, e)) {
-                    b.destroyed = true;
-                    e.hp--;
-                    if (e.hp <= 0) {
-                        e.dead = true;
-                        score += 10;
-                        createExplosion(e.x, e.y, '#ff4444');
-                        if (Math.random() < 0.1) {
-                            powerUps.push({ x: e.x, y: e.y, w: 20, h: 20, type: Math.random() < 0.3 ? 'life' : 'rapid' });
-                        }
-                    }
-                }
-            });
-        });
-        bullets = bullets.filter(b => !b.destroyed);
-        enemies = enemies.filter(e => !e.dead);
-
-        // 아이템 획득
-        powerUps = powerUps.filter(p => {
-            p.y += 2;
-            if (rectsOverlap(p, player)) {
-                if (p.type === 'life') lives = Math.min(lives + 1, 5);
-                else rapidFireTimer = 300;
-                updateUI();
-                return false;
-            }
-            return p.y < H;
-        });
-
-        // 충돌: 적/총알 -> 나
-        if (invincibleTimer > 0) invincibleTimer--;
-        else {
-            enemyBullets.forEach(eb => {
-                if (!eb.destroyed && rectsOverlap(eb, player)) {
-                    eb.destroyed = true;
-                    handlePlayerHit();
-                }
-            });
-            enemies.forEach(e => {
-                if (rectsOverlap(e, player)) handlePlayerHit();
-            });
-        }
-
-        explosions.forEach(ex => {
-            ex.x += ex.vx; ex.y += ex.vy;
-            ex.life -= ex.decay;
-        });
-        explosions = explosions.filter(ex => ex.life > 0);
-
-        if (enemies.length === 0) {
-            level++;
-            spawnEnemies();
-            updateUI();
-        }
-    }
-
-    function handlePlayerHit() {
-        lives--;
-        updateUI();
-        createExplosion(player.x, player.y, '#00ffff');
-        if (lives <= 0) endGame();
-        else invincibleTimer = 90;
-    }
-
-    function draw() {
-        ctx.clearRect(0, 0, W, H);
-
-        // 별 그리기
-        ctx.fillStyle = "#fff";
-        stars.forEach(s => ctx.fillRect(s.x, s.y, s.r, s.r));
-
-        // 플레이어
-        if (!(invincibleTimer > 0 && Math.floor(Date.now() / 100) % 2 === 0)) {
-            ctx.fillStyle = "#00ffff";
-            ctx.beginPath();
-            ctx.moveTo(player.x, player.y - 15);
-            ctx.lineTo(player.x - 15, player.y + 15);
-            ctx.lineTo(player.x + 15, player.y + 15);
-            ctx.fill();
-        }
-
-        // 적
-        enemies.forEach(e => {
-            ctx.fillStyle = e.type === 0 ? "#ff4444" : (e.type === 1 ? "#44ff44" : "#ff44ff");
-            ctx.fillRect(e.x - 15, e.y - 12, 30, 24);
-        });
-
-        // 총알
-        ctx.fillStyle = "#fff";
-        bullets.forEach(b => ctx.fillRect(b.x - 2, b.y - 6, 4, 12));
-        ctx.fillStyle = "#ff0";
-        enemyBullets.forEach(b => ctx.fillRect(b.x - 3, b.y - 3, 6, 6));
-
-        // 아이템
-        powerUps.forEach(p => {
-            ctx.fillStyle = p.type === 'life' ? "#ff0000" : "#00ffff";
-            ctx.fillRect(p.x - 10, p.y - 10, 20, 20);
-        });
-
-        // 폭발
-        explosions.forEach(ex => {
-            ctx.globalAlpha = ex.life;
-            ctx.fillStyle = ex.color;
-            ctx.fillRect(ex.x, ex.y, 3, 3);
-        });
-        ctx.globalAlpha = 1.0;
-    }
-
-    function loop() {
-        if (!gameRunning) return;
-        update();
-        draw();
-        animId = requestAnimationFrame(loop);
-    }
-
-    function endGame() {
-        gameRunning = false;
-        overlay.style.display = 'flex';
-        mainTitle.textContent = 'GAME OVER';
-        instructions.style.display = 'none';
-        finalScoreEl.style.display = 'block';
-        finalScoreEl.textContent = `최종 점수: ${score}`;
-        startBtn.textContent = '다시 시작';
-    }
-
-    startBtn.addEventListener('click', initGame);
-</script>
+  <script src="app.js"></script>
 </body>
 </html>
