@@ -1,0 +1,11 @@
+{
+  "name": "personal-walk-eta-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static personalized walking ETA prototype with a built-in local server.",
+  "scripts": {
+    "start": "node server.js",
+    "start:8000": "PORT=8000 node server.js",
+    "check": "node --check app.js && node --check server.js"
+  }
+}
